@@ -9,4 +9,9 @@ class V {
     public Object baz(V v, String s) {
         return new Object();
     }
+
+    public String baz(String s) {
+        return new String();
+    }
+
 }

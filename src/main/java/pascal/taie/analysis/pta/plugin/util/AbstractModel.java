@@ -136,6 +136,7 @@ public abstract class AbstractModel implements Model {
      * this convenient method returns points-to sets relevant arguments.
      * For case v/ai == csVar.getVar(), this method returns pts,
      * otherwise, it just returns current points-to set of v/ai.
+     * 获取一个方法调用中v a0、、an其中一份的pointToSet
      *
      * @param csVar   may be v or any ai.
      * @param pts     changed part of csVar

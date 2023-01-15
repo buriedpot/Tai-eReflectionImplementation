@@ -58,6 +58,8 @@ public class ReflectiveAction {
         Method baz = V.class.getMethod("baz", V.class, String.class);
         Object o = baz.invoke(new U(), new V(), "arg");
         use(o);
+        Method baz1 = V.class.getMethod("baz", String.class);
+        String o1 = (String) baz1.invoke(new U(), "arg");
     }
 
     static void get() throws Exception {

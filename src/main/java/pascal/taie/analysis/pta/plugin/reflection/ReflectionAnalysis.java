@@ -94,6 +94,7 @@ public class ReflectionAnalysis implements Plugin {
         if (reflectiveActionModel.isRelevantVar(csVar.getVar())) {
             reflectiveActionModel.handleNewPointsToSet(csVar, pts);
         }
+        // add to workList
         reflectiveArgs.get(csVar.getVar())
                 .forEach(edge -> passReflectiveArgs(edge, pts));
     }

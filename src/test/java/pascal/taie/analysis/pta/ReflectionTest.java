@@ -33,6 +33,10 @@ public class ReflectionTest {
     public void testStringConstant() {
         Tests.testPTA(DIR, "GetMember");
     }
+    @Test
+    public void testStringConstant1() {
+        Tests.testPTA(DIR, "ReflectiveAction");
+    }
 
     @Test
     public void testReflectionLog() {

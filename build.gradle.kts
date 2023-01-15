@@ -1,8 +1,25 @@
 plugins {
     id("application")
     id("tai-e.conventions")
+    /*id("maven-publish")
+    id("java")*/
 }
+/*group = "nju.lab.pascal"
+version = "1.0"*/
+/*publishing {
+    publications {
+        customLibrary(MavenPublication) {
+            from components.java
+        }
+    }
 
+    repositories {
+        maven {
+            name = 'sampleRepo'
+            url = layout.buildDirectory.dir("repo")
+        }
+    }
+}*/
 
 dependencies {
     // Process options
