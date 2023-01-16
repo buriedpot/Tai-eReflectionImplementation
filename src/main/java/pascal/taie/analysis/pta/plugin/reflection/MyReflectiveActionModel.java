@@ -28,6 +28,7 @@ import pascal.taie.WorldBuilder;
 import pascal.taie.analysis.pta.core.cs.context.Context;
 import pascal.taie.analysis.pta.core.cs.element.*;
 import pascal.taie.analysis.pta.core.cs.selector.ContextSelector;
+import pascal.taie.analysis.pta.core.heap.MockObj;
 import pascal.taie.analysis.pta.core.heap.Obj;
 import pascal.taie.analysis.pta.core.solver.PointerFlowEdge;
 import pascal.taie.analysis.pta.core.solver.Solver;
@@ -44,6 +45,7 @@ import pascal.taie.language.type.*;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static pascal.taie.analysis.pta.core.solver.PointerFlowEdge.Kind.INSTANCE_STORE;
 import static pascal.taie.analysis.pta.core.solver.PointerFlowEdge.Kind.STATIC_STORE;
@@ -238,8 +240,7 @@ class MyReflectiveActionModel extends AbstractModel {
         PointsToSet inferResultMtdObjs = solver.makePointsToSet();
 
 
-
-        int argsLength = inferArrayLengthByNewStmt(argsVar);
+//        int argsLength = inferArrayLengthByNewStmt(argsVar);
 //      Depracated  List<String> originalArgTypes = inferArrayArgTypesByStoreArray(argsVar);
 //        List<String> originalArgTypes = infer
 //        List<List<String>> ptpResult = ptp(originalArgTypes);
@@ -257,107 +258,142 @@ class MyReflectiveActionModel extends AbstractModel {
             if (target == null) {
                 Object alloc = mtdObj.getObject().getAllocation();
                 if (alloc instanceof UJMethod ujMethod) {
-                    if (ujMethod.isKnown()) {
-                        List<JMethod> allPossibleJMethods = MTD(ujMethod);
-                        for (JMethod possibleTargetMethod : allPossibleJMethods) {
+                    if (ujMethod.isMethodInMethods() && !ujMethod.isDeclaringClassUnknown()) {
+                        for (JMethod declaredMethod : hierarchy.getClass(ujMethod.declaringClass()).getDeclaredMethods()) {
+                            if (recvObjs.isEmpty()) {
+                                addReflectiveCallEdge(context, invoke, null, declaredMethod, argsVar);
+                            }
                             recvObjs.forEach(recvObj ->
-                                    addReflectiveCallEdge(context, invoke, recvObj, possibleTargetMethod, argsVar)
+                                    addReflectiveCallEdge(context, invoke, recvObj, declaredMethod, argsVar)
                             );
                         }
-                    }
-                    // mu − ∈ pt(m)
-                    // -------------------------
-                    //pt(m) ⊇ { mt− | oti ∈ pt (y)}
-                    //[I-InvTp]
-                    if (ujMethod.isDeclaringClassUnknown()) {
-                        recvObjs.forEach(csRecvObj -> {
-                            String possibleDelaringClass = csRecvObj.getObject().getType().getName();
-                            UJMethod inferResult = new UJMethod(
-                                    possibleDelaringClass,
-                                    ujMethod.returnType(),
-                                    ujMethod.methodName(),
-                                    ujMethod.parameters()
-                            );
-                            Obj inferResultMtdObj = heapModel.getMockObj(META_DESC, inferResult, method);
-                            CSObj csObj = csManager.getCSObj(defaultHctx, inferResultMtdObj);
-                            inferResultMtdObjs.addObject(csObj);
-                        });
-
-                    }
-
-                    // mus ∈ pt(m) oui ∈ pt (y) s.tr ≪: A s.nm , u s.p ∈ Ptp(args)
-                    //pt(m) ⊇ { mts | t ∈ M(s.tr , s.nm, s.p)}
-                    //[I-InvS2T]
-
-                    if (ujMethod.isDeclaringClassUnknown() && !ujMethod.isSubsignatureUnknown()) {
-                        boolean hasUnknownTypeObject = false;
-                        for (CSObj csRecvObj : recvObjs) {
-                            if (csRecvObj.getObject().getType().equals(unknown)
-                                    || csRecvObj.getObject().getType() == null) {
-                                hasUnknownTypeObject = true;
-                                break;
+                    } else {
+                        if (ujMethod.isKnown()) {
+                            List<JMethod> allPossibleJMethods = MTD(ujMethod);
+                            for (JMethod possibleTargetMethod : allPossibleJMethods) {
+                                if (recvObjs.isEmpty()) {
+                                    addReflectiveCallEdge(context, invoke, null, possibleTargetMethod, argsVar);
+                                }
+                                recvObjs.forEach(recvObj ->
+                                        addReflectiveCallEdge(context, invoke, recvObj, possibleTargetMethod, argsVar)
+                                );
                             }
                         }
-                        if (hasUnknownTypeObject) {
-                            if (ujMethod.isReturnTypeUnknown() || allPossibleTr.contains(ujMethod.returnType())) {
-                                if (!ujMethod.isMethodNameUnknown()) {
-                                    PointsToSet argsObjs = solver.getPointsToSetOf(csManager.getCSVar(context, argsVar));
-                                    List<String> arrTypes = new ArrayList<String>();
-                                    for (CSObj argsObj : argsObjs) {
-                                        for (CSObj argsElementObj : solver.getPointsToSetOf(csManager.getArrayIndex(argsObj))) {
-                                            arrTypes.addAll((getThisAndAllSuperClasses(argsElementObj.getObject().getType().getName())));
+                        // mu − ∈ pt(m)
+                        // -------------------------
+                        //pt(m) ⊇ { mt− | oti ∈ pt (y)}
+                        //[I-InvTp]
+                        if (ujMethod.isDeclaringClassUnknown()) {
+                            recvObjs.forEach(csRecvObj -> {
+                                String possibleDelaringClass = csRecvObj.getObject().getType().getName();
+                                UJMethod inferResult = new UJMethod(
+                                        possibleDelaringClass,
+                                        ujMethod.returnType(),
+                                        ujMethod.methodName(),
+                                        ujMethod.parameters()
+                                );
+                                Obj inferResultMtdObj = heapModel.getMockObj(META_DESC, inferResult, method);
+                                CSObj csObj = csManager.getCSObj(defaultHctx, inferResultMtdObj);
+                                inferResultMtdObjs.addObject(csObj);
+                            });
 
+                        }
+
+                        // mus ∈ pt(m) oui ∈ pt (y) s.tr ≪: A s.nm , u s.p ∈ Ptp(args)
+                        //pt(m) ⊇ { mts | t ∈ M(s.tr , s.nm, s.p)}
+                        //[I-InvS2T]
+
+                        if (ujMethod.isDeclaringClassUnknown() && !ujMethod.isSubsignatureUnknown()) {
+                            boolean hasUnknownTypeObject = false;
+                            for (CSObj csRecvObj : recvObjs) {
+                                if (csRecvObj.getObject().getType().equals(unknown)
+                                        || csRecvObj.getObject().getType() == null) {
+                                    hasUnknownTypeObject = true;
+                                    break;
+                                }
+                            }
+                            if (hasUnknownTypeObject) {
+                                if (ujMethod.isReturnTypeUnknown() || allPossibleTr.contains(ujMethod.returnType())) {
+                                    if (!ujMethod.isMethodNameUnknown()) {
+                                        PointsToSet argsObjs = solver.getPointsToSetOf(csManager.getCSVar(context, argsVar));
+                                        List<String> arrTypes = new ArrayList<String>();
+                                        List<Integer> argsLengths = new ArrayList<>();
+                                        for (CSObj argsCSObj : argsObjs) {
+                                            if (argsCSObj.getObject() instanceof MockObj mockArgsObj
+                                                    && mockArgsObj.getDescription().equals(MyStringBasedModel.ARRAY_LENGTH_DESC)) {
+                                                argsLengths.add((int) mockArgsObj.getAllocation());
+                                            } else {
+                                                for (CSObj argsElementObj : solver.getPointsToSetOf(csManager.getArrayIndex(argsCSObj))) {
+                                                    arrTypes.addAll((getThisAndAllSuperClasses(argsElementObj.getObject().getType().getName())));
+                                                    arrTypes = new ArrayList<>(new HashSet<>(arrTypes));
+                                                }
+                                            }
                                         }
-                                    }
-                                    List<List<String>> ptpResult = ptp3(arrTypes, argsLength);
-                                    if (!ujMethod.isParametersUnknown() &&
-                                            belongsToPtp(ujMethod.parameters(), ptpResult)) {
-                                        // 获取M(s.tr , s.nm, s.p)
-                                        Set<String> possibleDeclaringClasses = M(ujMethod.returnType(), ujMethod.methodName(), ujMethod.parameters());
-                                        for (String possibleDeclaringClass : possibleDeclaringClasses) {
-                                            UJMethod inferResult = new UJMethod(possibleDeclaringClass,
-                                                    ujMethod.returnType(), ujMethod.methodName(), ujMethod.parameters());
-                                            Obj inferResultMtdObj = heapModel.getMockObj(META_DESC, inferResult, method);
-                                            CSObj csObj = csManager.getCSObj(defaultHctx, inferResultMtdObj);
-                                            inferResultMtdObjs.addObject(csObj);
+
+                                        List<List<String>> ptpResult = new ArrayList<>();
+                                        for (Integer argsLength : argsLengths) {
+                                            ptpResult.addAll(ptp3(arrTypes, argsLength));
+                                        }
+                                        if (!ujMethod.isParametersUnknown() &&
+                                                belongsToPtp(ujMethod.parameters(), ptpResult)) {
+                                            // 获取M(s.tr , s.nm, s.p)
+                                            Set<String> possibleDeclaringClasses = M(ujMethod.returnType(), ujMethod.methodName(), ujMethod.parameters());
+                                            for (String possibleDeclaringClass : possibleDeclaringClasses) {
+                                                UJMethod inferResult = new UJMethod(possibleDeclaringClass,
+                                                        ujMethod.returnType(), ujMethod.methodName(), ujMethod.parameters());
+                                                Obj inferResultMtdObj = heapModel.getMockObj(META_DESC, inferResult, method);
+                                                CSObj csObj = csManager.getCSObj(defaultHctx, inferResultMtdObj);
+                                                inferResultMtdObjs.addObject(csObj);
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // m−u ∈ pt(m)
-                    // ------------------------
-                    //pt(m) ⊇ { m−s | s.p ∈ Ptp(args), s.tr ≪: A, s.nm = u}
-                    //[I-InvSig]
-                    if (ujMethod.isParametersUnknown()) {
-                        // 按理说应该用csobj的t来推断。这里从简，直接用var的type来推断。TODO: modify to csobj
+                        // m−u ∈ pt(m)
+                        // ------------------------
+                        //pt(m) ⊇ { m−s | s.p ∈ Ptp(args), s.tr ≪: A, s.nm = u}
+                        //[I-InvSig]
+                        if (ujMethod.isParametersUnknown()) {
+                            // 按理说应该用csobj的t来推断。这里从简，直接用var的type来推断。TODO: modify to csobj
                         /*for (CSObj csObj : csManager.getCSVar(context, argsVar).getPointsToSet()) {
                             Pointer arrayPtr = csManager.getArrayIndex(csObj);
                         }*/
 
-                        // 以这两个参数来计算PTP
-                        PointsToSet argsObjs = solver.getPointsToSetOf(csManager.getCSVar(context, argsVar));
-                        List<String> arrTypes = new ArrayList<String>();
-                        for (CSObj argsObj : argsObjs) {
-                            for (CSObj argsElementObj : solver.getPointsToSetOf(csManager.getArrayIndex(argsObj))) {
-                                arrTypes.addAll(getThisAndAllSuperClasses(argsElementObj.getObject().getType().getName()));
+                            // 以这两个参数来计算PTP
+                            PointsToSet argsObjs = solver.getPointsToSetOf(csManager.getCSVar(context, argsVar));
+                            List<String> arrTypes = new ArrayList<String>();
+                            List<Integer> argsLengths = new ArrayList<>();
+                            for (CSObj argsCSObj : argsObjs) {
+                                if (argsCSObj.getObject() instanceof MockObj mockArgsObj
+                                        && mockArgsObj.getDescription().equals(MyStringBasedModel.ARRAY_LENGTH_DESC)) {
+                                    argsLengths.add((int) mockArgsObj.getAllocation());
+                                } else {
+                                    for (CSObj argsElementObj : solver.getPointsToSetOf(csManager.getArrayIndex(argsCSObj))) {
+                                        arrTypes.addAll((getThisAndAllSuperClasses(argsElementObj.getObject().getType().getName())));
+                                        arrTypes = new ArrayList<>(new HashSet<>(arrTypes));
+                                    }
+                                }
 
                             }
-                        }
-                        List<List<String>> ptpResult = ptp3(arrTypes, argsLength);
-                        for (List<String> onePtp : ptpResult) {
-                            for (String oneTr : allPossibleTr) {
-                                // 构造m-s
-                                UJMethod inferResult = new UJMethod(ujMethod.declaringClass(),
-                                        oneTr, ujMethod.methodName(), onePtp);
-                                Obj inferResultMtdObj = heapModel.getMockObj(META_DESC, inferResult, method);
-                                CSObj csObj = csManager.getCSObj(defaultHctx, inferResultMtdObj);
-                                inferResultMtdObjs.addObject(csObj);
+
+                            List<List<String>> ptpResult = new ArrayList<>();
+                            for (Integer argsLength : argsLengths) {
+                                ptpResult.addAll(ptp3(arrTypes, argsLength));
                             }
+                            for (List<String> onePtp : ptpResult) {
+                                for (String oneTr : allPossibleTr) {
+                                    // 构造m-s
+                                    UJMethod inferResult = new UJMethod(ujMethod.declaringClass(),
+                                            oneTr, ujMethod.methodName(), onePtp);
+                                    Obj inferResultMtdObj = heapModel.getMockObj(META_DESC, inferResult, method);
+                                    CSObj csObj = csManager.getCSObj(defaultHctx, inferResultMtdObj);
+                                    inferResultMtdObjs.addObject(csObj);
+                                }
+                            }
+                            // TODO 暂时不构造arg1到argk了
                         }
-                        // TODO 暂时不构造arg1到argk了
                     }
                     if (!inferResultMtdObjs.isEmpty()) {
                         solver.addVarPointsTo(context, ((InvokeInstanceExp) invoke.getInvokeExp()).getBase(), inferResultMtdObjs);
@@ -485,6 +521,7 @@ class MyReflectiveActionModel extends AbstractModel {
         });
     }
 
+
     /**
      * 推断出数组长度新支撑
      * 寻找arrayCSVar New语句，获取length
@@ -556,7 +593,7 @@ class MyReflectiveActionModel extends AbstractModel {
             List<String> allSuperTypes = getThisAndAllSuperClasses(originalType);
             eachTypeSuperTypes.add(allSuperTypes);
         }
-        if (eachTypeSuperTypes.size() ==0) {
+        if (eachTypeSuperTypes.size() == 0) {
             return new ArrayList<List<String>>();
 
         }
@@ -593,6 +630,11 @@ class MyReflectiveActionModel extends AbstractModel {
      * @return {@link List}<{@link List}<{@link String}>>
      */
     public List<List<String>> ptp3(Collection<String> arrTypes, int argsLen) {
+        if (argsLen == 0) {
+            List<List<String>> noArgsResult = new ArrayList<>();
+            noArgsResult.add(new ArrayList<>());
+            return noArgsResult;
+        }
         List<List<String>> eachTypeSuperTypes = new ArrayList<List<String>>();
         for (int i = 0; i < argsLen; i++) {
             eachTypeSuperTypes.add((List<String>) arrTypes);
@@ -779,14 +821,33 @@ class MyReflectiveActionModel extends AbstractModel {
         String returnType = ujMethod.returnType();
         String methodName = ujMethod.methodName();
         List<String> parameters = ujMethod.parameters();
-        hierarchy.allClasses().forEach(jClass -> {
-            result.addAll(jClass.getDeclaredMethods().stream().filter(declaredMethod ->
-                    declaredMethod.getName().equals(methodName) &&
-                            equalList(declaredMethod.getParamTypes().stream()
-                                    .map(Type::getName)
-                                    .collect(Collectors.toList()), parameters)
-            ).collect(Collectors.toSet()));
-        });
+        if (ujMethod.isDeclaringClassUnknown()) {
+            hierarchy.allClasses().forEach(jClass -> {
+                result.addAll(jClass.getDeclaredMethods().stream().filter(declaredMethod ->
+                        declaredMethod.getName().equals(methodName) &&
+                                equalList(declaredMethod.getParamTypes().stream()
+                                        .map(Type::getName)
+                                        .toList(), parameters)
+                ).collect(Collectors.toSet()));
+            });
+        }
+        // dispatch
+        else {
+            String currentClass = ujMethod.declaringClass();
+            JClass currentJClass = hierarchy.getClass(currentClass);
+            while (currentJClass != null) {
+                List<JMethod> jMethodStream = currentJClass.getDeclaredMethods().stream().filter(
+                        declaredMethod -> declaredMethod.getName().equals(methodName) &&
+                                equalList(declaredMethod.getParamTypes().stream().map(Type::getName)
+                                        .collect(Collectors.toList()), parameters)).toList();
+                if (jMethodStream.size() > 0) {
+                    result.add(jMethodStream.get(0));
+                    return result;
+                }
+                currentJClass = currentJClass.getSuperClass();
+            }
+
+        }
         return result;
 
     }

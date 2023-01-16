@@ -26,15 +26,19 @@ import pascal.taie.analysis.pta.core.cs.element.CSMethod;
 import pascal.taie.analysis.pta.core.cs.element.CSObj;
 import pascal.taie.analysis.pta.core.cs.element.CSVar;
 import pascal.taie.analysis.pta.core.heap.Obj;
+import pascal.taie.analysis.pta.core.solver.PointerFlowEdge;
 import pascal.taie.analysis.pta.core.solver.Solver;
 import pascal.taie.analysis.pta.plugin.mock.UJMethod;
 import pascal.taie.analysis.pta.plugin.util.CSObjs;
 import pascal.taie.analysis.pta.plugin.util.Reflections;
 import pascal.taie.analysis.pta.pts.PointsToSet;
-import pascal.taie.ir.exp.Var;
+import pascal.taie.ir.exp.*;
 import pascal.taie.ir.stmt.Invoke;
+import pascal.taie.ir.stmt.New;
 import pascal.taie.language.classes.ClassNames;
 import pascal.taie.language.classes.JClass;
+import pascal.taie.language.classes.JMethod;
+import pascal.taie.language.type.ArrayType;
 import pascal.taie.language.type.ClassType;
 
 import java.util.List;
@@ -42,16 +46,18 @@ import java.util.List;
 class MyStringBasedModel extends MetaObjModel {
 
     private final static String META_DESC = "ReflectionMetaObj";
+    public final static String ARRAY_LENGTH_DESC = "ArrayLengthObj";
 
     private final static String UNKNOWN_SIG_MTD = "UnknownSigMtd";
     private final ClassType method;
 
+    private final ClassType integer;
 
 
     MyStringBasedModel(Solver solver) {
         super(solver);
         method = typeSystem.getClassType(ClassNames.METHOD);
-
+        integer = typeSystem.getClassType(ClassNames.INTEGER);
     }
 
     @Override
@@ -64,9 +70,15 @@ class MyStringBasedModel extends MetaObjModel {
 
         registerRelevantVarIndexes(get("getMethod"), BASE, 0);
         registerAPIHandler(get("getMethod"), this::getMethod);
+
+
+        registerRelevantVarIndexes(get("getMethods"), BASE);
+        registerAPIHandler(get("getMethods"), this::getMethods);
 //
 //        registerRelevantVarIndexes(get("getDeclaredMethod"), BASE, 0);
 //        registerAPIHandler(get("getDeclaredMethod"), this::getDeclaredMethod);
+
+
     }
 
     private void getConstructor(CSVar csVar, PointsToSet pts, Invoke invoke) {
@@ -169,8 +181,7 @@ class MyStringBasedModel extends MetaObjModel {
                             mtdObjs.addObject(csObj);
                         }
                     });
-                }
-                else {
+                } else {
                     nameObjs.forEach(nameObj -> {
                         String name = CSObjs.toString(nameObj);
                         // if c− = cu ∧ o_i^String \belongs SC
@@ -181,8 +192,7 @@ class MyStringBasedModel extends MetaObjModel {
                             Obj unknownMthdObj = heapModel.getMockObj(META_DESC, ujMethod, method);
                             CSObj csObj = csManager.getCSObj(defaultHctx, unknownMthdObj);
                             mtdObjs.addObject(csObj);
-                        }
-                        else {
+                        } else {
                             UJMethod ujMethod = new UJMethod(UJMethod.UNKNOWN_STRING, UJMethod.UNKNOWN_STRING,
                                     UJMethod.UNKNOWN_STRING, UJMethod.UNKNOWN_LIST);
                             Obj unknownMthdObj = heapModel.getMockObj(META_DESC, ujMethod, method);
@@ -196,6 +206,49 @@ class MyStringBasedModel extends MetaObjModel {
 
             if (!mtdObjs.isEmpty()) {
                 solver.addVarPointsTo(csVar.getContext(), result, mtdObjs);
+            }
+        }
+    }
+
+    private void getMethods(CSVar csVar, PointsToSet pts, Invoke invoke) {
+        Var result = invoke.getResult();
+        if (result != null) {
+            List<PointsToSet> args = getArgs(csVar, pts, invoke, BASE);
+            // c' 的 对象集合
+            PointsToSet clsObjs = args.get(0);
+            // mName的对象集合
+            // ...(数组)的对象集合
+            PointsToSet mtdObjs = solver.makePointsToSet();
+
+
+            // 对每个c'指向的对象
+            clsObjs.forEach(clsObj -> {
+                //  [P-GetMtd]
+                JClass cls = CSObjs.toClass(clsObj);
+                // if c-=c^t and o_iString belongsto SC
+                if (cls != null) {
+                    UJMethod ujMethod = new UJMethod(
+                            cls.getName(), UJMethod.UNKNOWN_STRING,
+                            UJMethod.UNKNOWN_STRING, UJMethod.UNKNOWN_LIST);
+                    ujMethod.setMethodInMethods(true);
+                    Obj unknownMthdObj = heapModel.getMockObj(META_DESC, ujMethod, method);
+                    CSObj csObj = csManager.getCSObj(defaultHctx, unknownMthdObj);
+                    mtdObjs.addObject(csObj);
+                } else {
+
+                }
+
+            });
+
+            if (!mtdObjs.isEmpty()) {
+                if (invoke.getLValue() != null) {
+                    CSVar csLValue = csManager.getCSVar(csVar.getContext(), invoke.getLValue());
+                    CSObj methodsCSObj = csManager.getCSObj(csVar.getContext(), heapModel.getMockObj(META_DESC, "methodsobj",
+                            typeSystem.getArrayType(method, 1)));
+                    solver.addPointsTo(csLValue, methodsCSObj);
+                    solver.addPointsTo(csManager.getArrayIndex(methodsCSObj), mtdObjs);
+
+                }
             }
         }
     }
@@ -231,5 +284,35 @@ class MyStringBasedModel extends MetaObjModel {
 
     @Override
     void handleNewCSMethod(CSMethod csMethod) {
+        JMethod jMethod = csMethod.getMethod();
+        jMethod.getIR()
+                .getStmts().stream().forEach(stmt -> {
+                    if (stmt instanceof New newStmt &&
+                            newStmt.getRValue() instanceof NewArray) {
+                        NewArray newArrayExp = (NewArray) newStmt.getRValue();
+                        if (newArrayExp.getLength().isConst()) {
+                            Literal arrayLenLiteral = newArrayExp.getLength().getConstValue();
+                            int len = 0;
+                            Var arrayVar = newStmt.getLValue();
+                            CSVar csArrayVar = csManager.getCSVar(csMethod.getContext(), arrayVar);
+                            if (arrayLenLiteral instanceof IntLiteral intConstValue) {
+                                len = intConstValue.getValue();
+                                Obj arrayLenObj = heapModel.getMockObj(ARRAY_LENGTH_DESC,
+                                        len, newArrayExp.getType());
+                                CSObj csObj = csManager.getCSObj(defaultHctx, arrayLenObj);
+                                solver.addVarPointsTo(csArrayVar.getContext(),
+                                        arrayVar, csObj);
+                            }
+
+                        }
+                    }
+                    if (stmt instanceof Invoke invoke &&
+                            "<java.lang.String: void <init>(java.lang.String)>"
+                                    .equals(invoke.getInvokeExp().getMethodRef().resolve().getSignature())) {
+                        CSVar from = csManager.getCSVar(csMethod.getContext(), invoke.getInvokeExp().getArg(0));
+                        CSVar to = csManager.getCSVar(csMethod.getContext(), ((InvokeSpecial) invoke.getInvokeExp()).getBase());
+                        solver.addPFGEdge(from, to, PointerFlowEdge.Kind.LOCAL_ASSIGN);
+                    }
+                });
     }
 }

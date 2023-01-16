@@ -43,6 +43,35 @@ public class MyReflectionTest {
     public void testArgsRefine() {
         Tests.testPTA(MYDIR, "ArgsRefine", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];action:dump");
     }
+
+    @Test
+    public void testInheritance() {
+        Tests.testPTA(MYDIR, "Inheritance", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];action:dump");
+    }
+    @Test
+    public void testRecvType() {
+        Tests.testPTA(MYDIR, "RecvType", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];action:dump");
+    }
+    @Test
+    public void testUnknownClassName() {
+        Tests.testPTA(MYDIR, "UnknownClassName", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];action:dump");
+    }
+
+    @Test
+    public void testUnknownMethodName() {
+        Tests.testPTA(MYDIR, "UnknownMethodName", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];cs:2-call;action:dump");
+//        Tests.testPTA(MYDIR, "UnknownMethodName", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];action:dump");
+    }
+
+    @Test
+    public void testGetMethods() {
+        Tests.testPTA(MYDIR, "GetMethods", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];action:dump");
+    }
+
+    @Test
+    public void testDuplicateName() {
+        Tests.testPTA(MYDIR, "DuplicateName", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];action:dump");
+    }
     @Test
     public void testGetMember() {
         Tests.testPTA(DIR, "GetMember", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis]");

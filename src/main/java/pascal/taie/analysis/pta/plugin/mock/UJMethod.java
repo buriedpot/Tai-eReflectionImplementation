@@ -9,7 +9,49 @@ import java.util.Objects;
  * @date 2023/01/14
  */
 
-public record UJMethod(String declaringClass, String returnType, String methodName, List<String> parameters) {
+public class UJMethod {
+    /**
+     * 为true的时候，直接推测，不再推理。因为这是一个在methods数组中的方法
+     */
+    boolean methodInMethods = false;
+
+    String declaringClass;
+    String returnType;
+    String methodName;
+    List<String> parameters;
+
+    public UJMethod(String declaringClass, String returnType, String methodName, List<String> parameters) {
+        this.declaringClass = declaringClass;
+        this.returnType = returnType;
+        this.methodName = methodName;
+        this.parameters = parameters;
+    }
+
+    public UJMethod setMethodInMethods(boolean methodInMethods) {
+        this.methodInMethods = methodInMethods;
+        return this;
+    }
+
+    public boolean isMethodInMethods() {
+        return methodInMethods;
+    }
+
+    public String methodName() {
+        return methodName;
+    }
+
+    public String declaringClass() {
+        return declaringClass;
+    }
+
+    public List<String> parameters() {
+        return parameters;
+    }
+
+    public String returnType() {
+        return returnType;
+    }
+
     public static final String UNKNOWN_STRING = null;
     public static final List<String> UNKNOWN_LIST = null;
 
@@ -37,5 +79,7 @@ public record UJMethod(String declaringClass, String returnType, String methodNa
     public boolean isKnown() {
         return declaringClass != null && methodName != null && parameters != null;
     }
+
+
 
 }

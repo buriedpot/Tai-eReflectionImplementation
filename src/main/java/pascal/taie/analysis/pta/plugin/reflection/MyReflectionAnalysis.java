@@ -29,8 +29,10 @@ import pascal.taie.analysis.pta.core.solver.Solver;
 import pascal.taie.analysis.pta.plugin.Plugin;
 import pascal.taie.analysis.pta.plugin.util.Model;
 import pascal.taie.analysis.pta.pts.PointsToSet;
+import pascal.taie.ir.exp.NewArray;
 import pascal.taie.ir.exp.Var;
 import pascal.taie.ir.stmt.Invoke;
+import pascal.taie.ir.stmt.New;
 import pascal.taie.language.classes.JMethod;
 import pascal.taie.language.type.ArrayType;
 import pascal.taie.language.type.ClassType;
@@ -77,6 +79,7 @@ public class MyReflectionAnalysis implements Plugin {
                     metaObjModel.handleNewInvoke(invoke);
                     reflectiveActionModel.handleNewInvoke(invoke);
                 });
+
     }
 
     @Override
