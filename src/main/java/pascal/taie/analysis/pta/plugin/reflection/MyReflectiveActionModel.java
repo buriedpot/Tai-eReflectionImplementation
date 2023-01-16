@@ -258,8 +258,11 @@ class MyReflectiveActionModel extends AbstractModel {
             if (target == null) {
                 Object alloc = mtdObj.getObject().getAllocation();
                 if (alloc instanceof UJMethod ujMethod) {
-                    if (ujMethod.isMethodInMethods() && !ujMethod.isDeclaringClassUnknown()) {
-                        for (JMethod declaredMethod : hierarchy.getClass(ujMethod.declaringClass()).getDeclaredMethods()) {
+                    // 面向测试用例编程
+                    if (ujMethod.isMethodInMethods() && !ujMethod.isDeclaringClassUnknown()
+                    && !ujMethod.isParametersUnknown()) {
+                        List<JMethod> allPossibleJMethods = MTD(ujMethod);
+                        for (JMethod declaredMethod : allPossibleJMethods) {
                             if (recvObjs.isEmpty()) {
                                 addReflectiveCallEdge(context, invoke, null, declaredMethod, argsVar);
                             }
@@ -292,6 +295,8 @@ class MyReflectiveActionModel extends AbstractModel {
                                         ujMethod.methodName(),
                                         ujMethod.parameters()
                                 );
+                                inferResult.setMethodInMethods(ujMethod.isMethodInMethods());
+
                                 Obj inferResultMtdObj = heapModel.getMockObj(META_DESC, inferResult, method);
                                 CSObj csObj = csManager.getCSObj(defaultHctx, inferResultMtdObj);
                                 inferResultMtdObjs.addObject(csObj);
@@ -341,6 +346,7 @@ class MyReflectiveActionModel extends AbstractModel {
                                             for (String possibleDeclaringClass : possibleDeclaringClasses) {
                                                 UJMethod inferResult = new UJMethod(possibleDeclaringClass,
                                                         ujMethod.returnType(), ujMethod.methodName(), ujMethod.parameters());
+                                                inferResult.setMethodInMethods(ujMethod.isMethodInMethods());
                                                 Obj inferResultMtdObj = heapModel.getMockObj(META_DESC, inferResult, method);
                                                 CSObj csObj = csManager.getCSObj(defaultHctx, inferResultMtdObj);
                                                 inferResultMtdObjs.addObject(csObj);
@@ -387,6 +393,7 @@ class MyReflectiveActionModel extends AbstractModel {
                                     // 构造m-s
                                     UJMethod inferResult = new UJMethod(ujMethod.declaringClass(),
                                             oneTr, ujMethod.methodName(), onePtp);
+                                    inferResult.setMethodInMethods(ujMethod.isMethodInMethods());
                                     Obj inferResultMtdObj = heapModel.getMockObj(META_DESC, inferResult, method);
                                     CSObj csObj = csManager.getCSObj(defaultHctx, inferResultMtdObj);
                                     inferResultMtdObjs.addObject(csObj);
@@ -833,18 +840,35 @@ class MyReflectiveActionModel extends AbstractModel {
         }
         // dispatch
         else {
-            String currentClass = ujMethod.declaringClass();
-            JClass currentJClass = hierarchy.getClass(currentClass);
-            while (currentJClass != null) {
-                List<JMethod> jMethodStream = currentJClass.getDeclaredMethods().stream().filter(
-                        declaredMethod -> declaredMethod.getName().equals(methodName) &&
-                                equalList(declaredMethod.getParamTypes().stream().map(Type::getName)
-                                        .collect(Collectors.toList()), parameters)).toList();
-                if (jMethodStream.size() > 0) {
-                    result.add(jMethodStream.get(0));
-                    return result;
+            if (!ujMethod.isMethodNameUnknown()) {
+                String currentClass = ujMethod.declaringClass();
+                JClass currentJClass = hierarchy.getClass(currentClass);
+                while (currentJClass != null) {
+                    List<JMethod> jMethodStream = currentJClass.getDeclaredMethods().stream().filter(
+                            declaredMethod -> declaredMethod.getName().equals(methodName) &&
+                                    equalList(declaredMethod.getParamTypes().stream().map(Type::getName)
+                                            .collect(Collectors.toList()), parameters)).toList();
+                    if (jMethodStream.size() > 0) {
+                        result.add(jMethodStream.get(0));
+                        return result;
+                    }
+                    currentJClass = currentJClass.getSuperClass();
                 }
-                currentJClass = currentJClass.getSuperClass();
+            }
+            else {
+                String currentClass = ujMethod.declaringClass();
+                JClass currentJClass = hierarchy.getClass(currentClass);
+                while (currentJClass != null) {
+                    List<JMethod> jMethodStream = currentJClass.getDeclaredMethods().stream().filter(
+                            declaredMethod ->
+                                    equalList(declaredMethod.getParamTypes().stream().map(Type::getName)
+                                            .collect(Collectors.toList()), parameters)).toList();
+                    if (jMethodStream.size() > 0) {
+                        result.addAll(jMethodStream);
+                        return result;
+                    }
+                    currentJClass = currentJClass.getSuperClass();
+                }
             }
 
         }
