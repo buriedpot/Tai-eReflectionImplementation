@@ -1,0 +1,39 @@
+Points-to sets of all variables
+[]:<ArgsRefine: java.lang.Class class$(java.lang.String)>/name -> [[]:ConstantObj{java.lang.String: "B"}, []:ConstantObj{java.lang.String: "java.lang.Object"}]
+[]:<ArgsRefine: java.lang.Class class$(java.lang.String)>/temp$0 -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+[]:<ArgsRefine: java.lang.Class class$(java.lang.String)>/temp$1 -> [[]:MergedObj{<Merged java.lang.NoClassDefFoundError>}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/%stringconst0 -> [[]:ConstantObj{java.lang.String: "B"}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/%stringconst1 -> [[]:ConstantObj{java.lang.String: "print"}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/%stringconst4 -> [[]:ConstantObj{java.lang.String: "hello"}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/args -> [[]:NewObj{<ArgsRefine: void invokePrint(java.lang.Class[])>[17@L12] newarray java.lang.Object[%intconst2]}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/b -> [[]:NewObj{<ArgsRefine: void invokePrint(java.lang.Class[])>[13@L11] new B}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/paramTypes -> [[]:NewObj{<ArgsRefine: void main(java.lang.String[])>[1@L6] newarray java.lang.Class[%intconst0]}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/print -> [[]:ReflectionMetaObj{alloc=UJMethod[declaringClass=B, returnType=null, methodName=print, parameters=[java.lang.String, java.lang.String]],type=java.lang.reflect.Method}, []:ReflectionMetaObj{alloc=UJMethod[declaringClass=B, returnType=null, methodName=print, parameters=null],type=java.lang.reflect.Method}, []:ReflectionMetaObj{alloc=UJMethod[declaringClass=java.lang.Object, returnType=null, methodName=print, parameters=[java.lang.String, java.lang.String]],type=java.lang.reflect.Method}, []:ReflectionMetaObj{alloc=UJMethod[declaringClass=java.lang.Object, returnType=null, methodName=print, parameters=null],type=java.lang.reflect.Method}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/temp$0 -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/temp$1 -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/temp$2 -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/temp$3 -> [[]:ReflectionMetaObj{alloc=UJMethod[declaringClass=B, returnType=null, methodName=print, parameters=null],type=java.lang.reflect.Method}, []:ReflectionMetaObj{alloc=UJMethod[declaringClass=java.lang.Object, returnType=null, methodName=print, parameters=null],type=java.lang.reflect.Method}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/temp$4 -> [[]:NewObj{<ArgsRefine: void invokePrint(java.lang.Class[])>[13@L11] new B}]
+[]:<ArgsRefine: void invokePrint(java.lang.Class[])>/temp$5 -> [[]:NewObj{<ArgsRefine: void invokePrint(java.lang.Class[])>[17@L12] newarray java.lang.Object[%intconst2]}]
+[]:<ArgsRefine: void main(java.lang.String[])>/%stringconst1 -> [[]:ConstantObj{java.lang.String: "java.lang.Object"}]
+[]:<ArgsRefine: void main(java.lang.String[])>/args -> [[]:EntryPointObj{alloc=<main-arguments>,type=java.lang.String[] in <ArgsRefine: void main(java.lang.String[])>}]
+[]:<ArgsRefine: void main(java.lang.String[])>/temp$0 -> [[]:NewObj{<ArgsRefine: void main(java.lang.String[])>[1@L6] newarray java.lang.Class[%intconst0]}]
+[]:<ArgsRefine: void main(java.lang.String[])>/temp$1 -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+[]:<ArgsRefine: void main(java.lang.String[])>/temp$2 -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+[]:<ArgsRefine: void main(java.lang.String[])>/temp$3 -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+[]:<ArgsRefine: void main(java.lang.String[])>/temp$4 -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+[]:<ArgsRefine: void main(java.lang.String[])>/temp$5 -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+[]:<ArgsRefine: void main(java.lang.String[])>/temp$6 -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+[]:<B: void <init>()>/%this -> [[]:NewObj{<ArgsRefine: void invokePrint(java.lang.Class[])>[13@L11] new B}]
+
+Points-to sets of all static fields
+<ArgsRefine: java.lang.Class class$B> -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+<ArgsRefine: java.lang.Class class$java$lang$Object> -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+
+Points-to sets of all instance fields
+
+Points-to sets of all array indexes
+[]:EntryPointObj{alloc=<main-arguments>,type=java.lang.String[] in <ArgsRefine: void main(java.lang.String[])>}[*] -> [[]:EntryPointObj{alloc=<main-arguments-element>,type=java.lang.String in <ArgsRefine: void main(java.lang.String[])>}]
+[]:NewObj{<ArgsRefine: void invokePrint(java.lang.Class[])>[17@L12] newarray java.lang.Object[%intconst2]}[*] -> [[]:ConstantObj{java.lang.String: "hello"}]
+[]:NewObj{<ArgsRefine: void main(java.lang.String[])>[1@L6] newarray java.lang.Class[%intconst0]}[*] -> [[]:ConstantObj{java.lang.Class: B.class}, []:ConstantObj{java.lang.Class: java.lang.Object.class}]
+

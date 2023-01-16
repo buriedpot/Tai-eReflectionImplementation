@@ -37,10 +37,7 @@ import pascal.taie.analysis.pta.plugin.util.CSObjs;
 import pascal.taie.analysis.pta.pts.PointsToSet;
 import pascal.taie.ir.exp.*;
 import pascal.taie.ir.proginfo.MethodRef;
-import pascal.taie.ir.stmt.Cast;
-import pascal.taie.ir.stmt.Invoke;
-import pascal.taie.ir.stmt.New;
-import pascal.taie.ir.stmt.Stmt;
+import pascal.taie.ir.stmt.*;
 import pascal.taie.language.classes.*;
 import pascal.taie.language.type.*;
 
@@ -230,7 +227,7 @@ class MyReflectiveActionModel extends AbstractModel {
      */
     private void methodInvoke(CSVar csVar, PointsToSet pts, Invoke invoke) {
         Context context = csVar.getContext();
-        List<PointsToSet> args = getArgs(csVar, pts, invoke, BASE, 0);
+        List<PointsToSet> args = getArgs(csVar, pts, invoke, BASE, 0, 1);
         // m对象集合pt(m)
         PointsToSet mtdObjs = args.get(0);
         // y的对象集合
@@ -241,9 +238,11 @@ class MyReflectiveActionModel extends AbstractModel {
         PointsToSet inferResultMtdObjs = solver.makePointsToSet();
 
 
+
         int argsLength = inferArrayLengthByNewStmt(argsVar);
-        List<String> originalArgTypes = inferArrayArgTypesByStoreArray(argsVar);
-        List<List<String>> ptpResult = ptp(originalArgTypes);
+//      Depracated  List<String> originalArgTypes = inferArrayArgTypesByStoreArray(argsVar);
+//        List<String> originalArgTypes = infer
+//        List<List<String>> ptpResult = ptp(originalArgTypes);
 
         // 获取A类型(可能有多个可能的A类型)
         List<String> allPossibleA = getMethodInvokeCastTargetClass(invoke.getLValue());
@@ -302,6 +301,15 @@ class MyReflectiveActionModel extends AbstractModel {
                         if (hasUnknownTypeObject) {
                             if (ujMethod.isReturnTypeUnknown() || allPossibleTr.contains(ujMethod.returnType())) {
                                 if (!ujMethod.isMethodNameUnknown()) {
+                                    PointsToSet argsObjs = solver.getPointsToSetOf(csManager.getCSVar(context, argsVar));
+                                    List<String> arrTypes = new ArrayList<String>();
+                                    for (CSObj argsObj : argsObjs) {
+                                        for (CSObj argsElementObj : solver.getPointsToSetOf(csManager.getArrayIndex(argsObj))) {
+                                            arrTypes.addAll((getThisAndAllSuperClasses(argsElementObj.getObject().getType().getName())));
+
+                                        }
+                                    }
+                                    List<List<String>> ptpResult = ptp3(arrTypes, argsLength);
                                     if (!ujMethod.isParametersUnknown() &&
                                             belongsToPtp(ujMethod.parameters(), ptpResult)) {
                                         // 获取M(s.tr , s.nm, s.p)
@@ -330,7 +338,15 @@ class MyReflectiveActionModel extends AbstractModel {
                         }*/
 
                         // 以这两个参数来计算PTP
+                        PointsToSet argsObjs = solver.getPointsToSetOf(csManager.getCSVar(context, argsVar));
+                        List<String> arrTypes = new ArrayList<String>();
+                        for (CSObj argsObj : argsObjs) {
+                            for (CSObj argsElementObj : solver.getPointsToSetOf(csManager.getArrayIndex(argsObj))) {
+                                arrTypes.addAll(getThisAndAllSuperClasses(argsElementObj.getObject().getType().getName()));
 
+                            }
+                        }
+                        List<List<String>> ptpResult = ptp3(arrTypes, argsLength);
                         for (List<String> onePtp : ptpResult) {
                             for (String oneTr : allPossibleTr) {
                                 // 构造m-s
@@ -343,7 +359,9 @@ class MyReflectiveActionModel extends AbstractModel {
                         }
                         // TODO 暂时不构造arg1到argk了
                     }
-                    solver.addVarPointsTo(context, ((InvokeInstanceExp) invoke.getInvokeExp()).getBase(), inferResultMtdObjs);
+                    if (!inferResultMtdObjs.isEmpty()) {
+                        solver.addVarPointsTo(context, ((InvokeInstanceExp) invoke.getInvokeExp()).getBase(), inferResultMtdObjs);
+                    }
 
 
                 }
@@ -476,19 +494,41 @@ class MyReflectiveActionModel extends AbstractModel {
      * @return int
      */
     public int inferArrayLengthByNewStmt(Var arrayVar) {
-        for (Stmt stmt : arrayVar.getMethod().getIR().getStmts()) {
-            if (stmt instanceof New newStmt) {
-                NewExp rValue = newStmt.getRValue();
-                if (rValue instanceof NewArray newArrayStmt) {
-                    Var lengthVar = newArrayStmt.getLength();
-                    if (lengthVar.isConst()) {
-                        Literal constValue = lengthVar.getConstValue();
-                        if (constValue instanceof IntLiteral intConstValue) {
-                            return intConstValue.getValue();
+        Queue<Var> wl = new LinkedList<>();
+        Set<Var> visited = new HashSet<>();
+        visited.add(arrayVar);
+        wl.offer(arrayVar);
+        while (!wl.isEmpty()) {
+            Var currentVar = wl.poll();
+
+            boolean hasNewStmt = false;
+            for (Stmt stmt : currentVar.getMethod().getIR().getStmts()) {
+                if (stmt instanceof New newStmt) {
+                    if (newStmt.getLValue().equals(currentVar)) {
+                        hasNewStmt = true;
+
+                        NewExp rValue = newStmt.getRValue();
+                        if (rValue instanceof NewArray newArrayStmt) {
+                            Var lengthVar = newArrayStmt.getLength();
+                            if (lengthVar.isConst()) {
+                                Literal constValue = lengthVar.getConstValue();
+                                if (constValue instanceof IntLiteral intConstValue) {
+                                    return intConstValue.getValue();
+                                }
+                            }
+                        }
+                    }
+                }
+                if (stmt instanceof Copy copyStmt) {
+                    if (copyStmt.getLValue().equals(arrayVar)) {
+                        if (!visited.contains(copyStmt.getRValue())) {
+                            visited.add(copyStmt.getRValue());
+                            wl.offer(copyStmt.getRValue());
                         }
                     }
                 }
             }
+
         }
         return -1;
     }
@@ -516,6 +556,10 @@ class MyReflectiveActionModel extends AbstractModel {
             List<String> allSuperTypes = getThisAndAllSuperClasses(originalType);
             eachTypeSuperTypes.add(allSuperTypes);
         }
+        if (eachTypeSuperTypes.size() ==0) {
+            return new ArrayList<List<String>>();
+
+        }
         return Lists.cartesianProduct(eachTypeSuperTypes);
     }
 
@@ -536,6 +580,24 @@ class MyReflectiveActionModel extends AbstractModel {
 //                if (get)
             }
         }
+        return Lists.cartesianProduct(eachTypeSuperTypes);
+    }
+
+    /**
+     * ptp2
+     * 参考论文的，无法精确分析数组类型时的PTP实现
+     * 参数1是pt(o-i.arr)的所有对象type。参数2是每个实参的declaredType
+     * TODO 没完全理解
+     *
+     * @param arrTypes 加勒比海盗类型
+     * @return {@link List}<{@link List}<{@link String}>>
+     */
+    public List<List<String>> ptp3(Collection<String> arrTypes, int argsLen) {
+        List<List<String>> eachTypeSuperTypes = new ArrayList<List<String>>();
+        for (int i = 0; i < argsLen; i++) {
+            eachTypeSuperTypes.add((List<String>) arrTypes);
+        }
+
         return Lists.cartesianProduct(eachTypeSuperTypes);
     }
 
@@ -620,6 +682,9 @@ class MyReflectiveActionModel extends AbstractModel {
      * @return {@link List}<{@link String}>
      */
     public List<String> getMethodInvokeCastTargetClass(Var lValue) {
+        if (lValue == null) {
+            return new ArrayList<>();
+        }
         // 获取lValue作为右值的所有Cast语句
         List<Cast> allCastAsRValue = getAllCastAsRValue(lValue);
         return allCastAsRValue.stream()

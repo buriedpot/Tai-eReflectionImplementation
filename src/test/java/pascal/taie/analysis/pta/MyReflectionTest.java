@@ -32,7 +32,16 @@ public class MyReflectionTest {
 
     @Test
     public void testSuperBasic() {
-        Tests.testPTA(MYDIR, "SuperBasic", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis]");
+        Tests.testPTA(MYDIR, "SuperBasic", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];action:dump");
+    }
+
+    @Test
+    public void testBasic() {
+        Tests.testPTA(MYDIR, "Basic", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];action:dump");
+    }
+    @Test
+    public void testArgsRefine() {
+        Tests.testPTA(MYDIR, "ArgsRefine", "plugins:[pascal.taie.analysis.pta.plugin.reflection.MyReflectionAnalysis];action:dump");
     }
     @Test
     public void testGetMember() {

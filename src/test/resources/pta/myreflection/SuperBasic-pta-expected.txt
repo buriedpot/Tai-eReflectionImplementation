@@ -1,0 +1,33 @@
+Points-to sets of all variables
+[]:<A: void <init>()>/%this -> [[]:NewObj{<SuperBasic: void main(java.lang.String[])>[19@L11] new A}, []:NewObj{<SuperBasic: void main(java.lang.String[])>[8@L10] new A}]
+[]:<A: void print1()>/%stringconst0 -> [[]:ConstantObj{java.lang.String: "A.print1()"}]
+[]:<A: void print1()>/%this -> [[]:NewObj{<SuperBasic: void main(java.lang.String[])>[19@L11] new A}]
+[]:<A: void print1()>/temp$0 -> []
+[]:<A: void print3(java.lang.String,java.lang.String)>/%this -> [[]:NewObj{<SuperBasic: void main(java.lang.String[])>[8@L10] new A}]
+[]:<A: void print3(java.lang.String,java.lang.String)>/temp$0 -> []
+[]:<A: void print3(java.lang.String,java.lang.String)>/temp$1 -> [[]:MergedObj{<Merged java.lang.StringBuffer>}]
+[]:<SuperBasic: void main(java.lang.String[])>/%stringconst0 -> [[]:ConstantObj{java.lang.String: "A"}]
+[]:<SuperBasic: void main(java.lang.String[])>/%stringconst2 -> [[]:ConstantObj{java.lang.String: "print3"}]
+[]:<SuperBasic: void main(java.lang.String[])>/%stringconst4 -> [[]:ConstantObj{java.lang.String: "ADDB"}]
+[]:<SuperBasic: void main(java.lang.String[])>/%stringconst6 -> [[]:ConstantObj{java.lang.String: "ADDC"}]
+[]:<SuperBasic: void main(java.lang.String[])>/args -> [[]:EntryPointObj{alloc=<main-arguments>,type=java.lang.String[] in <SuperBasic: void main(java.lang.String[])>}]
+[]:<SuperBasic: void main(java.lang.String[])>/classA -> [[]:ConstantObj{java.lang.Class: A.class}]
+[]:<SuperBasic: void main(java.lang.String[])>/invokeResult -> []
+[]:<SuperBasic: void main(java.lang.String[])>/myMethod -> [[]:ReflectionMetaObj{alloc=UJMethod[declaringClass=A, returnType=null, methodName=print3, parameters=[java.lang.Object, java.lang.Object]],type=java.lang.reflect.Method}, []:ReflectionMetaObj{alloc=UJMethod[declaringClass=A, returnType=null, methodName=print3, parameters=[java.lang.Object, java.lang.String]],type=java.lang.reflect.Method}, []:ReflectionMetaObj{alloc=UJMethod[declaringClass=A, returnType=null, methodName=print3, parameters=[java.lang.String, java.lang.Object]],type=java.lang.reflect.Method}, []:ReflectionMetaObj{alloc=UJMethod[declaringClass=A, returnType=null, methodName=print3, parameters=[java.lang.String, java.lang.String]],type=java.lang.reflect.Method}, []:ReflectionMetaObj{alloc=UJMethod[declaringClass=A, returnType=null, methodName=print3, parameters=null],type=java.lang.reflect.Method}]
+[]:<SuperBasic: void main(java.lang.String[])>/temp$0 -> [[]:ConstantObj{java.lang.Class: A.class}]
+[]:<SuperBasic: void main(java.lang.String[])>/temp$1 -> [[]:NewObj{<SuperBasic: void main(java.lang.String[])>[4@L9] newarray java.lang.Class[%intconst1]}]
+[]:<SuperBasic: void main(java.lang.String[])>/temp$2 -> [[]:ReflectionMetaObj{alloc=UJMethod[declaringClass=A, returnType=null, methodName=print3, parameters=null],type=java.lang.reflect.Method}]
+[]:<SuperBasic: void main(java.lang.String[])>/temp$3 -> [[]:NewObj{<SuperBasic: void main(java.lang.String[])>[8@L10] new A}]
+[]:<SuperBasic: void main(java.lang.String[])>/temp$4 -> [[]:NewObj{<SuperBasic: void main(java.lang.String[])>[11@L10] newarray java.lang.Object[%intconst3]}]
+[]:<SuperBasic: void main(java.lang.String[])>/temp$5 -> []
+[]:<SuperBasic: void main(java.lang.String[])>/temp$6 -> [[]:NewObj{<SuperBasic: void main(java.lang.String[])>[19@L11] new A}]
+
+Points-to sets of all static fields
+<java.lang.System: java.io.PrintStream out> -> []
+
+Points-to sets of all instance fields
+
+Points-to sets of all array indexes
+[]:EntryPointObj{alloc=<main-arguments>,type=java.lang.String[] in <SuperBasic: void main(java.lang.String[])>}[*] -> [[]:EntryPointObj{alloc=<main-arguments-element>,type=java.lang.String in <SuperBasic: void main(java.lang.String[])>}]
+[]:NewObj{<SuperBasic: void main(java.lang.String[])>[11@L10] newarray java.lang.Object[%intconst3]}[*] -> [[]:ConstantObj{java.lang.String: "ADDB"}, []:ConstantObj{java.lang.String: "ADDC"}]
+

@@ -8,6 +8,7 @@ public class SuperBasic {
         Class<?> classA = Class.forName("A");
         Method myMethod = classA.getMethod("print3");
         Object invokeResult = myMethod.invoke(new A(), "ADDB", "ADDC");
+        new A().print1();
         return;
     }
 
