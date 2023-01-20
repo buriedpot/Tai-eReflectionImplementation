@@ -80,6 +80,4 @@ public class UJMethod {
         return declaringClass != null && methodName != null && parameters != null;
     }
 
-
-
 }

@@ -113,7 +113,7 @@ class MyReflectiveActionModel extends AbstractModel {
 //        registerAPIHandler(constructorNewInstance, this::constructorNewInstance);
 //
         JMethod methodInvoke = hierarchy.getJREMethod("<java.lang.reflect.Method: java.lang.Object invoke(java.lang.Object,java.lang.Object[])>");
-        registerRelevantVarIndexes(methodInvoke, BASE, 0);
+        registerRelevantVarIndexes(methodInvoke, BASE, 0, 1);
         registerAPIHandler(methodInvoke, this::methodInvoke);
 //
 //        JMethod fieldGet = hierarchy.getJREMethod("<java.lang.reflect.Field: java.lang.Object get(java.lang.Object)>");
@@ -402,18 +402,15 @@ class MyReflectiveActionModel extends AbstractModel {
                             // TODO 暂时不构造arg1到argk了
                         }
                     }
-                    if (!inferResultMtdObjs.isEmpty()) {
-                        solver.addVarPointsTo(context, ((InvokeInstanceExp) invoke.getInvokeExp()).getBase(), inferResultMtdObjs);
-                    }
-
-
                 }
 
 
                 // no need inference, directly add stmts (mts)
                 // TODO 暂时不按照T-INV实现，先跑通
                 // [T-Inv]
-
+                if (!inferResultMtdObjs.isEmpty()) {
+                    solver.addVarPointsTo(context, ((InvokeInstanceExp) invoke.getInvokeExp()).getBase(), inferResultMtdObjs);
+                }
 
                 return;
             }

@@ -22,12 +22,15 @@
 
 package pascal.taie.analysis.pta;
 
+import org.junit.After;
 import org.junit.Test;
 import pascal.taie.analysis.Tests;
+import pascal.taie.analysis.graph.callgraph.CallGraphs;
 
 public class MyReflectionTest {
 
     private static final String MYDIR = "myreflection";
+
     private static final String DIR = "reflection";
 
     @Test

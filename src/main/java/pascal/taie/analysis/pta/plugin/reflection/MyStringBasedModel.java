@@ -156,52 +156,18 @@ class MyStringBasedModel extends MetaObjModel {
 
             // 对每个c'指向的对象
             clsObjs.forEach(clsObj -> {
-                //  [P-GetMtd]
+                //  [P-GetMtd] TODO check modify on 1.19
                 JClass cls = CSObjs.toClass(clsObj);
-                // if c-=c^t and o_iString belongsto SC
-                if (cls != null) {
-                    nameObjs.forEach(nameObj -> {
-                        String name = CSObjs.toString(nameObj);
-                        // if c− = ct ∧ o_i^String \belongs SC
-                        if (name != null) {
-                            UJMethod ujMethod = new UJMethod(
-                                    cls.getName(), UJMethod.UNKNOWN_STRING,
-                                    name, UJMethod.UNKNOWN_LIST);
-                            Obj unknownMthdObj = heapModel.getMockObj(META_DESC, ujMethod, method);
-                            CSObj csObj = csManager.getCSObj(defaultHctx, unknownMthdObj);
-                            mtdObjs.addObject(csObj);
-                        }
-                        // if c- == ct and o_iString not \belongs SC
-                        // pt(m_ contains m_u^t
-                        else {
-                            UJMethod ujMethod = new UJMethod(cls.getName(), UJMethod.UNKNOWN_STRING,
-                                    UJMethod.UNKNOWN_STRING, UJMethod.UNKNOWN_LIST);
-                            Obj unknownSigMtdObj = heapModel.getMockObj(META_DESC, ujMethod, method);
-                            CSObj csObj = csManager.getCSObj(defaultHctx, unknownSigMtdObj);
-                            mtdObjs.addObject(csObj);
-                        }
-                    });
-                } else {
-                    nameObjs.forEach(nameObj -> {
-                        String name = CSObjs.toString(nameObj);
-                        // if c− = cu ∧ o_i^String \belongs SC
-                        // TODO reconstruct after verifying correctness
-                        if (name != null) {
-                            UJMethod ujMethod = new UJMethod(UJMethod.UNKNOWN_STRING, UJMethod.UNKNOWN_STRING,
-                                    name, UJMethod.UNKNOWN_LIST);
-                            Obj unknownMthdObj = heapModel.getMockObj(META_DESC, ujMethod, method);
-                            CSObj csObj = csManager.getCSObj(defaultHctx, unknownMthdObj);
-                            mtdObjs.addObject(csObj);
-                        } else {
-                            UJMethod ujMethod = new UJMethod(UJMethod.UNKNOWN_STRING, UJMethod.UNKNOWN_STRING,
-                                    UJMethod.UNKNOWN_STRING, UJMethod.UNKNOWN_LIST);
-                            Obj unknownMthdObj = heapModel.getMockObj(META_DESC, ujMethod, method);
-                            CSObj csObj = csManager.getCSObj(defaultHctx, unknownMthdObj);
-                            mtdObjs.addObject(csObj);
-                        }
-                    });
-                }
-
+                String clsName = cls != null ? cls.getName() : UJMethod.UNKNOWN_STRING;
+                nameObjs.forEach(nameObj -> {
+                    String name = CSObjs.toString(nameObj);
+                    UJMethod ujMethod = new UJMethod(
+                            clsName, UJMethod.UNKNOWN_STRING,
+                            name, UJMethod.UNKNOWN_LIST);
+                    Obj unknownMthdObj = heapModel.getMockObj(META_DESC, ujMethod, method);
+                    CSObj csObj = csManager.getCSObj(defaultHctx, unknownMthdObj);
+                    mtdObjs.addObject(csObj);
+                });
             });
 
             if (!mtdObjs.isEmpty()) {
@@ -308,7 +274,8 @@ class MyStringBasedModel extends MetaObjModel {
                     }
                     if (stmt instanceof Invoke invoke &&
                             "<java.lang.String: void <init>(java.lang.String)>"
-                                    .equals(invoke.getInvokeExp().getMethodRef().resolve().getSignature())) {
+                                    .equals(invoke.getInvokeExp().getMethodRef().resolve().getSignature()) &&
+                    "java.lang.String".equals(invoke.getMethodRef().resolve().getDeclaringClass().getName())) {
                         CSVar from = csManager.getCSVar(csMethod.getContext(), invoke.getInvokeExp().getArg(0));
                         CSVar to = csManager.getCSVar(csMethod.getContext(), ((InvokeSpecial) invoke.getInvokeExp()).getBase());
                         solver.addPFGEdge(from, to, PointerFlowEdge.Kind.LOCAL_ASSIGN);

@@ -22,13 +22,18 @@
 
 package pascal.taie.analysis.pta.plugin.reflection;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import pascal.taie.analysis.graph.callgraph.Edge;
+import pascal.taie.analysis.pta.PointerAnalysisResultImpl;
 import pascal.taie.analysis.pta.core.cs.context.Context;
 import pascal.taie.analysis.pta.core.cs.element.*;
 import pascal.taie.analysis.pta.core.solver.Solver;
 import pascal.taie.analysis.pta.plugin.Plugin;
 import pascal.taie.analysis.pta.plugin.util.Model;
 import pascal.taie.analysis.pta.pts.PointsToSet;
+import pascal.taie.config.Configs;
+import pascal.taie.ir.IRPrinter;
 import pascal.taie.ir.exp.NewArray;
 import pascal.taie.ir.exp.Var;
 import pascal.taie.ir.stmt.Invoke;
@@ -37,13 +42,23 @@ import pascal.taie.language.classes.JMethod;
 import pascal.taie.language.type.ArrayType;
 import pascal.taie.language.type.ClassType;
 import pascal.taie.language.type.Type;
+import pascal.taie.util.Indexer;
+import pascal.taie.util.SimpleIndexer;
 import pascal.taie.util.collection.Maps;
 import pascal.taie.util.collection.MultiMap;
+import pascal.taie.util.graph.DotDumper;
+
+import java.io.File;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static pascal.taie.analysis.pta.core.solver.PointerFlowEdge.Kind.PARAMETER_PASSING;
 import static pascal.taie.analysis.pta.core.solver.PointerFlowEdge.Kind.RETURN;
 
 public class MyReflectionAnalysis implements Plugin {
+    private static final Logger logger = LogManager.getLogger(MyReflectionAnalysis.class);
+
 
 //    private Model classModel;
 
@@ -163,5 +178,10 @@ public class MyReflectionAnalysis implements Plugin {
      */
     private static boolean isConcerned(Type type) {
         return type instanceof ClassType || type instanceof ArrayType;
+    }
+
+    @Override
+    public void onFinish() {
+
     }
 }
