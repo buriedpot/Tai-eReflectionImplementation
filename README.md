@@ -5,8 +5,24 @@
 
 </div>
 
-## 目前存在的问题
-谭老师说无论什么context-sensitive都应该能分析出来，那就是说最后推导的时候，UnknownMethod和UnknownClass两个用例的具体方法名和类名都是未知的。而我的处理是给new String新添加PFGEdge，传递了字符串常量，最后推导的时候都是已知的。可能应该换一种实现，因为这样实现的话，UnknownMethods那个用例必须得2-sensitive才能通过。
+## 实现情况：八个测试用例全部通过
+## 实现截图
+* Basic
+![Basic](readmepngs/Basic.png)
+* ArgsRefine
+![ArgsRefine](readmepngs/ArgsRefine.png)
+* DuplicateName
+![DuplicateName](readmepngs/DuplicateName.png)
+* Inheritance
+![Inheritance](readmepngs/Inheritance.png)
+* RecvObject
+![RecvObject](readmepngs/RecvObject.png)
+* getMethods
+![getMethods](readmepngs/getMethods.png)
+* UnknownClassName
+![UnknownClassName](readmepngs/UnknownClassName.png)
+* UnknownMethodName
+![UnknownMethodName](readmepngs/UnknownMethodName.png)
 
 
 ## What is Tai-e?
